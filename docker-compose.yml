@@ -1,0 +1,7 @@
+version: '3'
+services:
+  smtp_client:
+    image: smtp_client
+    ports:
+      - "8000:8000"
+    restart: always
