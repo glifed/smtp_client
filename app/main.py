@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import FastAPI, Form, HTTPException, Request, status, Security, Depends, HTTPException
+from fastapi import FastAPI, Form, HTTPException, Request, status, Security, Depends, HTTPException, UploadFile, File
 import smtplib
 from email.message import EmailMessage
 import os
@@ -52,12 +52,17 @@ app.add_middleware(
 
 
 @app.post("/submit")
-def submit(Email: str = Form(), Subject: str = Form(), Message: str = Form(), api_key: APIKey = Depends(get_api_key)):
+def submit(Email: str = Form(), Subject: str = Form(), Message: str = Form(),
+           Attachment: UploadFile = File(...), api_key: APIKey = Depends(get_api_key)):
+
     msg = EmailMessage()
     msg['Subject'] = Subject
     msg['From'] = os.environ.get('EMAIL_USER')
     msg['To'] = Email
     msg.set_content(f"""{Message}""")
+    attachment_content = Attachment.file.read()
+    attachment_filename = Attachment.filename
+    msg.add_attachment(attachment_content, maintype='application', subtype='octet-stream', filename=attachment_filename)
 
     with smtplib.SMTP(str(os.environ.get('EMAIL_SERVER')), str(os.environ.get('EMAIL_PORT'))) as smtp:
         smtp.login(str(os.environ.get('EMAIL_USER')), str(os.environ.get('EMAIL_PASS')))
